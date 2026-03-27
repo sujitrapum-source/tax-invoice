@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ดึงข้อมูลใบกำกับภาษี</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root {
+  --bg:#0f1117;--surface:#1a1d27;--surface2:#222636;--border:#2e3248;
+  --accent:#4f8ef7;--accent2:#7c5cfc;--gold:#f5c842;--green:#3ecf8e;
+  --red:#f56565;--orange:#f5a742;--text:#e8eaf0;--text2:#8b92a8;--text3:#5a6080;
+  --r:12px;--rs:8px;
+  --fu:'Sarabun','Noto Sans Thai','Tahoma','Arial Unicode MS',sans-serif;
+  --fm:'IBM Plex Mono','Consolas','Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--fu);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+.hdr{background:linear-gradient(135deg,var(--surface),#161926);border-bottom:1px solid var(--border);padding:20px 32px;display:flex;align-items:center;gap:16px}
+.hdr-ico{width:44px;height:44px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.hdr h1{font-size:20px;font-weight:700}
+.hdr p{font-size:13px;color:var(--text2);margin-top:2px}
+.badge{margin-left:auto;background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.3);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.main{max-width:1400px;margin:0 auto;padding:28px 24px}
+.uzone{border:2px dashed var(--border);border-radius:var(--r);padding:48px 32px;text-align:center;cursor:pointer;transition:all .25s;background:var(--surface);position:relative}
+.uzone:hover,.uzone.over{border-color:var(--accent);background:rgba(79,142,247,.06)}
+.uzone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.uzone h2{font-size:18px;font-weight:600;margin-bottom:8px}
+.uzone p{color:var(--text2);font-size:14px}
+.fmts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.ftag{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:4px 10px;border-radius:6px;font-size:12px;font-family:var(--fm)}
+.flist{margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.fitem{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:12px 16px;display:flex;align-items:center;gap:12px}
+.fi{font-size:20px}.fn{font-size:14px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fs{color:var(--text2);font-size:12px;white-space:nowrap}
+.frm{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:2px 6px;border-radius:4px;transition:color .2s}
+.frm:hover{color:var(--red)}
+.acts{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+.btn{padding:12px 24px;border-radius:var(--rs);font-family:var(--fu);font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all .2s;display:flex;align-items:center;gap:8px}
+.bp{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.bp:hover{opacity:.9;transform:translateY(-1px)}
+.bp:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.bs{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
+.bs:hover{border-color:var(--accent);color:var(--accent)}
+.bg{background:linear-gradient(135deg,#2ecc87,#1fa86e);color:#fff}
+.bg:hover{opacity:.9;transform:translateY(-1px)}
+.prog{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 24px;margin-top:20px;display:none}
+.prog.show{display:block}
+.ph{display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px}
+.pbg{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.pb{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .4s ease;width:0%}
+.ps{margin-top:12px;font-size:13px;color:var(--text2)}
+.sl{margin-top:4px;font-size:12px;color:var(--text3);font-family:var(--fm)}
+.rw{margin-top:28px}
+.rh{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.rt{font-size:18px;font-weight:700}
+.rc{background:rgba(62,207,142,.15);border:1px solid rgba(62,207,142,.3);color:var(--green);padding:3px 10px;border-radius:20px;font-size:13px;font-weight:600}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:20px;overflow:hidden}
+.ch{background:var(--surface2);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px}
+.pb2{background:rgba(79,142,247,.15);border:1px solid rgba(79,142,247,.3);color:var(--accent);padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;font-family:var(--fm)}
+.fl{color:var(--text2);font-size:13px;margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px}
+.cb{padding:20px}
+.fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.fg2{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:14px}
+.fg2.full{grid-column:1/-1}
+.fl2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:600;margin-bottom:6px}
+.fv{font-size:15px;color:var(--text);font-weight:500;line-height:1.5}
+.fv.mo{font-family:var(--fm);font-size:14px}
+.fv.am{color:var(--gold);font-family:var(--fm);font-size:16px;font-weight:600}
+.fv.vt{color:var(--orange);font-family:var(--fm);font-size:16px;font-weight:600}
+.fv.tt{color:var(--green);font-family:var(--fm);font-size:18px;font-weight:700}
+.fv.em{color:var(--text3);font-style:italic}
+.sl2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:12px;grid-column:1/-1}
+.warn{margin-top:16px;padding:12px 16px;background:rgba(245,167,66,.1);border:1px solid rgba(245,167,66,.3);border-radius:var(--rs);font-size:13px;color:var(--orange);display:flex;align-items:flex-start;gap:10px}
+.warn strong{color:var(--gold)}
+.err{background:rgba(245,101,101,.08);border:1px solid rgba(245,101,101,.3);border-radius:var(--r);padding:20px;margin-bottom:16px;color:var(--red);font-size:14px;display:flex;gap:12px;align-items:flex-start}
+.empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.big{font-size:56px;margin-bottom:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sp{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+.sum{margin-top:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.sh{background:var(--surface2);border-bottom:1px solid var(--border);padding:14px 20px;font-size:14px;font-weight:600}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--surface2);color:var(--text2);font-weight:600;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(79,142,247,.04)}
+.mo2{font-family:var(--fm);font-size:12px}
+.am2{color:var(--gold);font-family:var(--fm)}
+.vt2{color:var(--orange);font-family:var(--fm)}
+.tt2{color:var(--green);font-family:var(--fm);font-weight:600}
+.ww{color:var(--orange);font-size:12px;max-width:300px}
+@media(max-width:600px){.main{padding:16px 12px}.hdr{padding:16px}.fg{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="hdr-ico">🧾</div>
+  <div><h1>ดึงข้อมูลใบกำกับภาษี</h1><p>Tax Invoice Extractor · PDF &amp; Image · AI-Powered</p></div>
+  <span class="badge">✦ Claude AI</span>
+</div>
+<div class="main">
+    <div class="uzone" id="uz">
+    <input type="file" id="fi" multiple accept=".pdf,image/*">
+    <div style="font-size:48px;margin-bottom:12px">📂</div>
+    <h2>ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์</h2>
+    <p>รองรับ PDF และรูปภาพ (JPG, PNG, WEBP, HEIC)</p>
+    <div class="fmts">
+      <span class="ftag">PDF</span><span class="ftag">JPG</span><span class="ftag">PNG</span>
+      <span class="ftag">WEBP</span><span class="ftag">ภาษาไทย</span><span class="ftag">English</span>
+      <span class="ftag">中文</span><span class="ftag">ลายมือ</span>
+    </div>
+  </div>
+  <div class="flist" id="fl"></div>
+  <div class="acts" id="aw" style="display:none">
+    <button class="btn bp" id="eb"><span>🔍</span> ดึงข้อมูลทั้งหมด</button>
+    <button class="btn bs" id="cb2">🗑 ล้างทั้งหมด</button>
+  </div>
+  <div class="prog" id="pw">
+    <div class="ph"><span id="pl">กำลังประมวลผล...</span><span id="pp" style="color:var(--accent);font-weight:600">0%</span></div>
+    <div class="pbg"><div class="pb" id="pb"></div></div>
+    <div class="ps" id="ps"></div>
+  </div>
+  <div class="rw" id="rw" style="display:none">
+    <div class="rh">
+      <span class="rt">📋 ผลลัพธ์</span>
+      <span class="rc" id="rc">0 รายการ</span>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn bg" id="xb">⬇ ดาวน์โหลด Excel (.xlsx)</button>
+        <button class="btn bs" id="mb">+ เพิ่มไฟล์</button>
+      </div>
+    </div>
+    <div id="cc"></div>
+    <div class="sum"><div class="sh">📊 ตารางสรุปทั้งหมด</div><div class="tw"><table id="st"></table></div></div>
+  </div>
+  <div class="empty" id="es"><div class="big">🗂</div><p style="color:var(--text2);font-weight:600;margin-bottom:6px">ยังไม่มีข้อมูล</p><p>อัปโหลดไฟล์ใบกำกับภาษีเพื่อเริ่มต้น</p></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   XLSX WRITER  –  zero dependencies, verified ZIP spec
+   ═══════════════════════════════════════════════════ */
+const XLSX = (() => {
+  // CRC-32
+  const T = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) { let c = i; for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); T[i] = c; }
+  const crc32 = b => { let c = 0xFFFFFFFF; for (const x of b) c = T[(c ^ x) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+
+  const enc = new TextEncoder();
+  const u8s = s => enc.encode(s);
+  const cat = (...a) => { const r = new Uint8Array(a.reduce((s,x)=>s+x.length,0)); let o=0; a.forEach(x=>{r.set(x,o);o+=x.length;}); return r; };
+  const u16 = n => new Uint8Array([n & 0xFF, (n >> 8) & 0xFF]);
+  const u32 = n => new Uint8Array([n&0xFF,(n>>8)&0xFF,(n>>16)&0xFF,(n>>24)&0xFF]);
+
+  function buildZip(files) {
+    // files = [{name:string, data:Uint8Array}]
+    const locals = [], centrals = [], offsets = [];
+    let off = 0;
+    for (const {name, data} of files) {
+      const nb  = u8s(name);
+      const crc = crc32(data);
+      const sz  = data.length;
+      // Local file header (30 bytes fixed) + name + data
+      const loc = cat(
+        u8s('PK\x03\x04'),
+        u16(20), u16(0), u16(0),   // version, flags, method(store)
+        u16(0),  u16(0),            // mod time, mod date
+        u32(crc), u32(sz), u32(sz),
+        u16(nb.length), u16(0),     // name len, extra len
+        nb, data
+      );
+      // Central directory (46 bytes fixed) + name
+      const cen = cat(
+        u8s('PK\x01\x02'),
+        u16(20), u16(20),           // version made, version needed
+        u16(0),  u16(0),  u16(0),   // flags, method, mod time
+        u16(0),                     // mod date
+        u32(crc), u32(sz), u32(sz),
+        u16(nb.length),             // name len
+        u16(0), u16(0),             // extra len, comment len
+        u16(0), u16(0),             // disk start, internal attr
+        u32(0),                     // external attr
+        u32(off),                   // local header offset  ← key
+        nb
+      );
+      offsets.push(off); off += loc.length;
+      locals.push(loc); centrals.push(cen);
+    }
+    const cd   = cat(...centrals);
+    const eocd = cat(
+      u8s('PK\x05\x06'),
+      u16(0), u16(0),
+      u16(files.length), u16(files.length),
+      u32(cd.length), u32(off),
+      u16(0)
+    );
+    return cat(...locals, cd, eocd);
+  }
+
+  const X  = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const CL = c => { let s=''; c++; while(c>0){s=String.fromCharCode(64+((c-1)%26+1))+s;c=Math.floor((c-1)/26);} return s; };
+
+  function write(sheetName, headers, rows) {
+    const sst=[]; const si={};
+    const addSS = v => { const s=String(v??''); if(si[s]!=null)return si[s]; si[s]=sst.length; sst.push(s); return sst.length-1; };
+
+    const allRows = [headers, ...rows];
+    let sheetData = '';
+    allRows.forEach((row, ri) => {
+      let cells = '';
+      row.forEach((v, ci) => {
+        const ref = CL(ci) + (ri+1);
+        if (typeof v === 'number' && !isNaN(v)) {
+          cells += `<c r="${ref}"><v>${v}</v></c>`;
+        } else {
+          cells += `<c r="${ref}" t="s"><v>${addSS(v)}</v></c>`;
+        }
+      });
+      sheetData += `<row r="${ri+1}"${ri===0?' s="1"':''}>${cells}</row>`;
+    });
+
+    const W = [6,24,6,14,14,30,18,14,40,30,18,14,40,16,16,16,50,30];
+    const cols = W.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('');
+    const lastCol = CL(headers.length-1);
+
+    const sheetXml = `<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetViews><sheetView workbookViewId="0"/></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols>${cols}</cols><sheetData>${sheetData}</sheetData><autoFilter ref="A1:${lastCol}1"/></worksheet>`;
+
+    const sstXml = `<?xml version="1.0" encoding="UTF-8"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${sst.length}" uniqueCount="${sst.length}">${sst.map(s=>`<si><t xml:space="preserve">${X(s)}</t></si>`).join('')}</sst>`;
+
+    const stylesXml = `<?xml version="1.0" encoding="UTF-8"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF2D3561"/></patternFill></fill></fills><borders><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"><alignment horizontal="center" wrapText="1"/></xf></cellXfs></styleSheet>`;
+
+    const wbXml    = `<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${X(sheetName)}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+    const wbRels   = `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+    const pkgRels  = `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+    const ctXml    = `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`;
+
+    const zip = buildZip([
+      {name:'[Content_Types].xml',        data:u8s(ctXml)},
+      {name:'_rels/.rels',                data:u8s(pkgRels)},
+      {name:'xl/workbook.xml',            data:u8s(wbXml)},
+      {name:'xl/_rels/workbook.xml.rels', data:u8s(wbRels)},
+      {name:'xl/worksheets/sheet1.xml',   data:u8s(sheetXml)},
+      {name:'xl/sharedStrings.xml',       data:u8s(sstXml)},
+      {name:'xl/styles.xml',              data:u8s(stylesXml)},
+    ]);
+    return zip;
+  }
+
+  function save(filename, sheetName, headers, rows) {
+    const buf  = write(sheetName, headers, rows);
+    const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+
+  return {save};
+})();
+
+/* ═══════════════════════════════════════════════════
+   APP
+   ═══════════════════════════════════════════════════ */
+// Auto-detect: ใช้ proxy เมื่อรันผ่าน server, ใช้ Anthropic โดยตรงเมื่อเปิดจาก file://
+const IS_LOCAL_SERVER = true;
+const API = '/api/extract';
+let files = [], results = [];
+const $  = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* ── file handling ── */
+const zone = $('uz'), fin = $('fi');
+zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('over'); push([...e.dataTransfer.files]); });
+fin.addEventListener('change', () => { push([...fin.files]); fin.value=''; });
+$('mb').addEventListener('click', () => fin.click());
+
+function push(arr) { arr.forEach(f=>{ if(!files.find(x=>x.name===f.name&&x.size===f.size)) files.push(f); }); redraw(); }
+function redraw() {
+  $('fl').innerHTML = files.map((f,i)=>`
+    <div class="fitem">
+      <span class="fi">${f.type==='application/pdf'?'📄':'🖼'}</span>
+      <span class="fn" title="${esc(f.name)}">${esc(f.name)}</span>
+      <span class="fs">${(f.size/1024).toFixed(0)} KB</span>
+      <button class="frm" onclick="del(${i})">✕</button>
+    </div>`).join('');
+  $('aw').style.display = files.length ? 'flex' : 'none';
+}
+function del(i) { files.splice(i,1); redraw(); }
+
+$('cb2').addEventListener('click', () => {
+  files=[]; redraw(); results=[];
+  $('rw').style.display='none'; $('es').style.display='block';
+  $('pw').classList.remove('show');
+});
+
+/* ── progress ── */
+function setP(pct, label) {
+  $('pb').style.width = pct+'%';
+  $('pp').textContent = pct+'%';
+  $('pl').textContent = label;
+}
+function setS(msg) { $('ps').innerHTML = `<div class="sl">→ ${esc(msg)}</div>`; }
+
+/* ── extract ── */
+$('eb').addEventListener('click', async () => {
+  if (!files.length) return;
+  const btn = $('eb');
+  btn.disabled = true; btn.innerHTML = '<div class="sp"></div> กำลังดึงข้อมูล...';
+  results = []; $('cc').innerHTML = '';
+  $('es').style.display = 'none'; $('rw').style.display = 'none';
+  $('pw').classList.add('show'); setP(0,'เตรียมไฟล์...');
+
+  let done = 0;
+  for (const file of files) {
+    setS(`📂 กำลังอ่าน: ${file.name}`);
+    try {
+      const page = await toPage(file);
+      setS(`🤖 AI วิเคราะห์ ${file.name}${page.type==='pdf'?' (PDF ทุกหน้า)':''}`);
+      const items = await callClaude(page, file.name);
+      items.forEach((item, idx) => {
+        item.fileName = file.name; item.pageNum = idx+1; item.totalPages = items.length;
+        results.push(item); renderCard(item, results.length-1);
+      });
+    } catch(err) {
+      results.push({error:err.message, fileName:file.name});
+      $('cc').insertAdjacentHTML('beforeend',`
+        <div class="err"><span style="font-size:22px">⚠️</span>
+        <div><strong>เกิดข้อผิดพลาด: ${esc(file.name)}</strong><br>
+        <span style="font-size:13px">${esc(err.message)}</span></div></div>`);
+    }
+    done++;
+    setP(Math.round(done/files.length*100), `ประมวลผล ${done}/${files.length} ไฟล์`);
+  }
+
+  setP(100,'✅ เสร็จสิ้น!');
+  setTimeout(()=>$('pw').classList.remove('show'), 2000);
+  $('rw').style.display = 'block';
+  $('rc').textContent = `${results.filter(r=>!r.error).length} รายการ`;
+  renderTable();
+  btn.disabled = false; btn.innerHTML = '<span>🔍</span> ดึงข้อมูลทั้งหมด';
+});
+
+/* ── file → base64 ── */
+async function toPage(file) {
+  const b64 = await new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej; r.readAsDataURL(file);
+  });
+  return file.type==='application/pdf'
+    ? {type:'pdf', b64, mime:'application/pdf'}
+    : {type:'image', b64, mime:file.type||'image/jpeg'};
+}
+
+/* ── Claude API ── */
+async function callClaude(page, fileName) {
+  const isPdf = page.type === 'pdf';
+  const prompt = `คุณคือผู้เชี่ยวชาญด้านการอ่านใบกำกับภาษี (Tax Invoice) ภาษาไทย อังกฤษ จีน และลายมือ
+
+ไฟล์: ${fileName}
+${isPdf ? 'เอกสารนี้อาจมีหลายหน้า กรุณาดึงข้อมูลใบกำกับภาษีทุกใบที่พบ (ทุกหน้า)' : 'ดึงข้อมูลใบกำกับภาษีจากรูปนี้'}
+
+ส่งผลลัพธ์เป็น JSON array เท่านั้น ห้ามมีข้อความอื่น ห้ามมี markdown backtick
+แม้พบใบเดียวก็ให้ส่งเป็น array ที่มี 1 element
+
+[{"invoice_date":"DD.MM.YYYY หรือ null","invoice_date_thai":"วว.ดด.ปปปป หรือ null","buyer_name":"null","buyer_tax_id":"13หลักตัวเลขล้วน หรือ null","buyer_branch":"null","buyer_address":"null","seller_name":"null","seller_tax_id":"13หลักตัวเลขล้วน หรือ null","seller_branch":"null","seller_address":"null","amount_before_vat":"ตัวเลขทศนิยม หรือ null","vat_amount":"ตัวเลขทศนิยม หรือ null","total_with_vat":"ตัวเลขทศนิยม หรือ null","source_page":"หน้าที่พบ หรือ null","uncertain_fields":["field:เหตุผล"],"notes":"null"}]
+
+กฎ: เลขภาษีตัวเลขล้วนไม่มีขีด · ยอดเงินตัวเลขล้วนไม่มีบาทไม่มีลูกน้ำ · ไม่พบใส่ null · ไม่มั่นใจระบุใน uncertain_fields`;
+
+  const block = isPdf
+    ? {type:'document', source:{type:'base64', media_type:'application/pdf', data:page.b64}}
+    : {type:'image',    source:{type:'base64', media_type:page.mime,          data:page.b64}};
+
+  const resp = await fetch(API, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({b64:page.b64, mime:page.mime, filename:fileName})
+  });
+
+  if (!resp.ok) {
+    const e = await resp.text();
+    throw new Error(`API Error ${resp.status}: ${e.slice(0,300)}`);
+  }
+  const data = await resp.json();
+  if (!resp.ok || data.error) throw new Error(data.error || 'Server error');
+  return Array.isArray(data.result) ? data.result : [data.result];
+}
+
+/* ── render card ── */
+function fv(v, cls='') {
+  if (!v || v==='null') return '<span class="fv em">—</span>';
+  return `<span class="fv ${cls}">${esc(String(v))}</span>`;
+}
+function renderCard(d, idx) {
+  const pl = d.totalPages>1 ? `หน้า ${d.pageNum}/${d.totalPages}` : 'หน้าเดียว';
+  const wu = d.uncertain_fields?.length ? `
+    <div class="warn"><span style="font-size:18px;flex-shrink:0">⚠️</span>
+    <div><strong>📌 พี่หนิงเช็คอีกทีนะคะ — รายการที่ไม่มั่นใจ:</strong><br>
+    ${d.uncertain_fields.map(f=>`• ${esc(f)}`).join('<br>')}</div></div>` : '';
+  $('cc').insertAdjacentHTML('beforeend',`
+    <div class="card">
+      <div class="ch">
+        <span class="pb2">${pl}</span>
+        <span style="font-weight:600;font-size:14px">ใบกำกับภาษี #${idx+1}</span>
+        <span class="fl" title="${esc(d.fileName)}">📁 ${esc(d.fileName)}</span>
+      </div>
+      <div class="cb">
+        <div class="fg">
+          <div class="sl2">📅 วันที่เอกสาร</div>
+          <div class="fg2"><div class="fl2">วันที่ (DD.MM.YYYY)</div>${fv(d.invoice_date,'mo')}</div>
+          <div class="fg2"><div class="fl2">วันที่ (วว.ดด.ปปปป)</div>${fv(d.invoice_date_thai,'mo')}</div>
+          <div class="sl2">🏢 ผู้ซื้อ (Buyer)</div>
+          <div class="fg2"><div class="fl2">ชื่อผู้ซื้อ</div>${fv(d.buyer_name)}</div>
+          <div class="fg2"><div class="fl2">เลขผู้เสียภาษี</div>${fv(d.buyer_tax_id,'mo')}</div>
+          <div class="fg2"><div class="fl2">สาขา</div>${fv(d.buyer_branch)}</div>
+          <div class="fg2 full"><div class="fl2">ที่อยู่</div>${fv(d.buyer_address)}</div>
+          <div class="sl2">🏭 ผู้ขาย (Seller)</div>
+          <div class="fg2"><div class="fl2">ชื่อผู้ขาย</div>${fv(d.seller_name)}</div>
+          <div class="fg2"><div class="fl2">เลขผู้เสียภาษี</div>${fv(d.seller_tax_id,'mo')}</div>
+          <div class="fg2"><div class="fl2">สาขา</div>${fv(d.seller_branch)}</div>
+          <div class="fg2 full"><div class="fl2">ที่อยู่</div>${fv(d.seller_address)}</div>
+          <div class="sl2">💰 ยอดเงิน</div>
+          <div class="fg2"><div class="fl2">ยอดก่อน VAT</div>${fv(d.amount_before_vat,'am')}</div>
+          <div class="fg2"><div class="fl2">VAT 7%</div>${fv(d.vat_amount,'vt')}</div>
+          <div class="fg2"><div class="fl2">ยอดรวม (รวม VAT)</div>${fv(d.total_with_vat,'tt')}</div>
+        </div>
+        ${d.notes&&d.notes!=='null'?`<div style="margin-top:12px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text2)">📝 ${esc(d.notes)}</div>`:''}
+        ${wu}
+      </div>
+    </div>`);
+}
+
+/* ── summary table ── */
+function renderTable() {
+  const valid = results.filter(r=>!r.error);
+  if (!valid.length) return;
+  const ths = ['#','ไฟล์','หน้า','วันที่','ผู้ซื้อ','เลขภาษีผู้ซื้อ','สาขาผู้ซื้อ','ที่อยู่ผู้ซื้อ','ผู้ขาย','เลขภาษีผู้ขาย','สาขาผู้ขาย','ที่อยู่ผู้ขาย','ก่อน VAT','VAT 7%','รวม VAT','หมายเหตุ/ไม่มั่นใจ'];
+  let h = `<thead><tr>${ths.map(t=>`<th>${t}</th>`).join('')}</tr></thead><tbody>`;
+  valid.forEach((r,i) => {
+    const w = r.uncertain_fields?.length ? '⚠️ '+r.uncertain_fields.join('; ') : '';
+    h += `<tr>
+      <td>${i+1}</td>
+      <td title="${esc(r.fileName||'')}" style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${esc(r.fileName||'')}</td>
+      <td class="mo2">${r.pageNum||''}</td>
+      <td class="mo2">${esc(r.invoice_date||'')}</td>
+      <td>${esc(r.buyer_name||'')}</td>
+      <td class="mo2">${esc(r.buyer_tax_id||'')}</td>
+      <td>${esc(r.buyer_branch||'')}</td>
+      <td title="${esc(r.buyer_address||'')}">${esc((r.buyer_address||'').slice(0,40))}${(r.buyer_address||'').length>40?'...':''}</td>
+      <td>${esc(r.seller_name||'')}</td>
+      <td class="mo2">${esc(r.seller_tax_id||'')}</td>
+      <td>${esc(r.seller_branch||'')}</td>
+      <td title="${esc(r.seller_address||'')}">${esc((r.seller_address||'').slice(0,40))}${(r.seller_address||'').length>40?'...':''}</td>
+      <td class="am2">${esc(r.amount_before_vat||'')}</td>
+      <td class="vt2">${esc(r.vat_amount||'')}</td>
+      <td class="tt2">${esc(r.total_with_vat||'')}</td>
+      <td class="ww">${esc(w)}</td>
+    </tr>`;
+  });
+  $('st').innerHTML = h + '</tbody>';
+}
+
+/* ── export ── */
+$('xb').addEventListener('click', () => {
+  const valid = results.filter(r=>!r.error);
+  if (!valid.length) { alert('ไม่มีข้อมูลสำหรับส่งออก'); return; }
+  const hdr = ['ลำดับ','ชื่อไฟล์','หน้า','วันที่ (DD.MM.YYYY)','วันที่ (วว.ดด.ปปปป)','ชื่อผู้ซื้อ','เลขประจำตัวผู้เสียภาษีผู้ซื้อ','สาขาผู้ซื้อ','ที่อยู่ผู้ซื้อ','ชื่อผู้ขาย','เลขประจำตัวผู้เสียภาษีผู้ขาย','สาขาผู้ขาย','ที่อยู่ผู้ขาย','ยอดก่อนภาษีมูลค่าเพิ่ม','ยอดภาษีมูลค่าเพิ่ม 7%','ยอดรวมภาษีมูลค่าเพิ่ม','รายการที่ไม่มั่นใจ (พี่หนิงเช็คอีกที)','หมายเหตุ'];
+  const rows = valid.map((r,i) => [
+    i+1, r.fileName||'', r.pageNum||'',
+    r.invoice_date||'', r.invoice_date_thai||'',
+    r.buyer_name||'', r.buyer_tax_id||'', r.buyer_branch||'', r.buyer_address||'',
+    r.seller_name||'', r.seller_tax_id||'', r.seller_branch||'', r.seller_address||'',
+    r.amount_before_vat ? parseFloat(r.amount_before_vat) : '',
+    r.vat_amount        ? parseFloat(r.vat_amount)        : '',
+    r.total_with_vat    ? parseFloat(r.total_with_vat)    : '',
+    r.uncertain_fields?.length ? r.uncertain_fields.join('; ') : '',
+    r.notes && r.notes!=='null' ? r.notes : ''
+  ]);
+  const ts = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  XLSX.save(`tax_invoices_${ts}.xlsx`, 'ใบกำกับภาษี', hdr, rows);
+});
+
+
+
+</script>
+</body>
+</html>
