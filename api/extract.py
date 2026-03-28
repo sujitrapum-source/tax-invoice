@@ -1,8 +1,8 @@
 from http.server import BaseHTTPRequestHandler
-import json, os, requests, base64, cgi, io
+import json, os, requests
 
-CLAUDE_URL = "https://api.anthropic.com/v1/messages"
-API_KEY    = os.environ.get("ANTHROPIC_API_KEY", "")
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+API_KEY    = os.environ.get("GEMINI_API_KEY", "")
 
 PROMPT = """คุณคือผู้เชี่ยวชาญด้านการอ่านใบกำกับภาษี (Tax Invoice) ภาษาไทย อังกฤษ จีน และลายมือ
 
@@ -23,47 +23,35 @@ class handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         if not API_KEY:
-            self._json(500, {"error": "ANTHROPIC_API_KEY ยังไม่ได้ตั้งค่าใน Vercel Environment Variables"})
+            self._json(500, {"error": "GEMINI_API_KEY ยังไม่ได้ตั้งค่าใน Vercel Environment Variables"})
             return
         try:
-            ct     = self.headers.get("Content-Type", "")
             length = int(self.headers.get("Content-Length", 0))
-            body   = self.rfile.read(length)
-            data   = json.loads(body)
+            data   = json.loads(self.rfile.read(length))
 
             b64      = data["b64"]
             mime     = data["mime"]
             filename = data.get("filename", "file")
             is_pdf   = mime == "application/pdf"
-
-            block = (
-                {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": b64}}
-                if is_pdf else
-                {"type": "image",    "source": {"type": "base64", "media_type": mime,               "data": b64}}
-            )
-            extra = "เอกสารนี้อาจมีหลายหน้า กรุณาดึงข้อมูลใบกำกับภาษีทุกใบที่พบ" if is_pdf else ""
+            extra    = "เอกสารนี้อาจมีหลายหน้า กรุณาดึงข้อมูลใบกำกับภาษีทุกใบที่พบ" if is_pdf else ""
 
             payload = {
-                "model":      "claude-sonnet-4-20250514",
-                "max_tokens": 4000,
-                "messages":   [{"role": "user", "content": [
-                    block,
-                    {"type": "text", "text": f"ไฟล์: {filename}\n{extra}\n\n{PROMPT}"}
-                ]}]
+                "contents": [{
+                    "parts": [
+                        {"inline_data": {"mime_type": mime, "data": b64}},
+                        {"text": f"ไฟล์: {filename}\n{extra}\n\n{PROMPT}"}
+                    ]
+                }],
+                "generationConfig": {"temperature": 0, "maxOutputTokens": 4000}
             }
-            headers = {
-                "Content-Type":      "application/json",
-                "x-api-key":         API_KEY,
-                "anthropic-version": "2023-06-01",
-            }
-            resp = requests.post(CLAUDE_URL, json=payload, headers=headers, timeout=120)
+
+            resp = requests.post(f"{GEMINI_URL}?key={API_KEY}", json=payload, timeout=120)
             resp.raise_for_status()
 
-            text   = "".join(c.get("text","") for c in resp.json()["content"])
-            text   = text.replace("```json","").replace("```","").strip()
+            text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+            text = text.replace("```json", "").replace("```", "").strip()
             parsed = json.loads(text)
-            result = parsed if isinstance(parsed, list) else [parsed]
-            self._json(200, {"result": result})
+            self._json(200, {"result": parsed if isinstance(parsed, list) else [parsed]})
 
         except requests.HTTPError as e:
             self._json(e.response.status_code, {"error": e.response.text[:300]})
