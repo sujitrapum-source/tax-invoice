@@ -1,7 +1,7 @@
 from http.server import BaseHTTPRequestHandler
 import json, os, requests
 
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent"
 API_KEY    = os.environ.get("GEMINI_API_KEY", "")
 
 PROMPT = """คุณคือผู้เชี่ยวชาญด้านการอ่านใบกำกับภาษี (Tax Invoice) ภาษาไทย อังกฤษ จีน และลายมือ
