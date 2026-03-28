@@ -1,7 +1,7 @@
 from http.server import BaseHTTPRequestHandler
 import json, os, requests
 
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 API_KEY    = os.environ.get("GEMINI_API_KEY", "")
 
 PROMPT = """คุณคือผู้เชี่ยวชาญด้านการอ่านใบกำกับภาษี (Tax Invoice) ภาษาไทย อังกฤษ จีน และลายมือ
@@ -26,9 +26,8 @@ class handler(BaseHTTPRequestHandler):
             self._json(500, {"error": "GEMINI_API_KEY ยังไม่ได้ตั้งค่าใน Vercel Environment Variables"})
             return
         try:
-            length = int(self.headers.get("Content-Length", 0))
-            data   = json.loads(self.rfile.read(length))
-
+            length   = int(self.headers.get("Content-Length", 0))
+            data     = json.loads(self.rfile.read(length))
             b64      = data["b64"]
             mime     = data["mime"]
             filename = data.get("filename", "file")
@@ -36,20 +35,16 @@ class handler(BaseHTTPRequestHandler):
             extra    = "เอกสารนี้อาจมีหลายหน้า กรุณาดึงข้อมูลใบกำกับภาษีทุกใบที่พบ" if is_pdf else ""
 
             payload = {
-                "contents": [{
-                    "parts": [
-                        {"inline_data": {"mime_type": mime, "data": b64}},
-                        {"text": f"ไฟล์: {filename}\n{extra}\n\n{PROMPT}"}
-                    ]
-                }],
+                "contents": [{"parts": [
+                    {"inline_data": {"mime_type": mime, "data": b64}},
+                    {"text": f"ไฟล์: {filename}\n{extra}\n\n{PROMPT}"}
+                ]}],
                 "generationConfig": {"temperature": 0, "maxOutputTokens": 4000}
             }
-
             resp = requests.post(f"{GEMINI_URL}?key={API_KEY}", json=payload, timeout=120)
             resp.raise_for_status()
-
-            text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
-            text = text.replace("```json", "").replace("```", "").strip()
+            text   = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+            text   = text.replace("```json", "").replace("```", "").strip()
             parsed = json.loads(text)
             self._json(200, {"result": parsed if isinstance(parsed, list) else [parsed]})
 
